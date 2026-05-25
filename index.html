@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Kit Alerts Dashboard</title>
+
+<style>
+  :root {
+    --bg-main: #f4f6fb;
+    --bg-card: #ffffff;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #f59e0b;
+    --table-head: #111827;
+    --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    --radius-lg: 22px;
+    --radius-md: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(22, 163, 74, 0.10), transparent 28%),
+      var(--bg-main);
+    color: var(--text-main);
+  }
+
+  .page {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 32px 0;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #111827, #1e3a8a);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    right: -80px;
+    top: -80px;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .pulse-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 rgba(34,197,94, 0.8);
+    animation: pulse 1.6s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(34,197,94, 0.8);
+    }
+    70% {
+      box-shadow: 0 0 0 9px rgba(34,197,94, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(34,197,94, 0);
+    }
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 5vw, 48px);
+    letter-spacing: -1.2px;
+  }
+
+  .hero p {
+    max-width: 740px;
+    color: rgba(255,255,255,0.82);
+    font-size: 16px;
+    line-height: 1.7;
+    margin: 14px 0 0;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin: 22px 0;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-label {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+
+  .stat-small {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .panel-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .panel-subtitle {
+    margin: 5px 0 0;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-input {
+    width: 260px;
+    max-width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-size: 14px;
+    outline: none;
+    background: #f9fafb;
+  }
+
+  .search-input:focus {
+    border-color: var(--primary);
+    background: white;
+  }
+
+  .button {
+    border: none;
+    background: var(--primary);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: 0.2s ease;
+  }
+
+  .button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+  }
+
+  .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 780px;
+  }
+
+  thead {
+    background: var(--table-head);
+    color: white;
+  }
+
+  th {
+    text-align: left;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    padding: 15px 18px;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+
+  tbody tr {
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:hover {
+    background: #f8fafc;
+  }
+
+  .timestamp {
+    font-family: Consolas, Monaco, monospace;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+
+  .owner {
+    font-weight: 700;
+  }
+
+  .sensor {
+    font-family: Consolas, Monaco, monospace;
+    background: #eef2ff;
+    color: #1e3a8a;
+    padding: 6px 9px;
+    border-radius: 999px;
+    display: inline-block;
+    font-weight: 800;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 800;
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 46px 18px;
+    color: var(--text-muted);
+  }
+
+  .empty-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 8px;
+  }
+
+  .new-alert {
+    animation: rowFlash 1.4s ease-out;
+  }
+
+  @keyframes rowFlash {
+    0% {
+      background: #fef3c7;
+    }
+    100% {
+      background: transparent;
+    }
+  }
+
+  .endpoint-box {
+    margin-top: 22px;
+    background: #0f172a;
+    color: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .endpoint-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .endpoint-header h2 {
+    margin: 0;
+    font-size: 19px;
+  }
+
+  .endpoint-header p {
+    margin: 7px 0 0;
+    color: rgba(255,255,255,0.72);
+    font-size: 14px;
+  }
+
+  .code-block {
+    margin: 0;
+    padding: 18px 22px;
+    overflow-x: auto;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #d1d5db;
+    background: #020617;
+  }
+
+  .footer-note {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 18px 4px 0;
+  }
+
+  @media (max-width: 900px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 580px) {
+    .page {
+      width: min(100% - 20px, 1180px);
+      padding: 16px 0;
+    }
+
+    .hero {
+      padding: 22px;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .panel-header {
+      align-items: stretch;
+    }
+
+    .controls,
+    .search-input,
+    .button {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="eyebrow">
+        <span class="pulse-dot"></span>
+        Live Firebase Alerts Monitor
+      </div>
+
+      <h1>Kit Alerts Dashboard</h1>
+
+      <p>
+        This dashboard listens dynamically to the Firebase Realtime Database
+        <strong>alerts</strong> branch and displays incoming power alerts in descending order as they arrive.
+      </p>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Connection Status</div>
+      <div class="stat-value" id="connectionStatus">Connecting</div>
+      <div class="stat-small">Realtime listener status</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Total Alerts</div>
+      <div class="stat-value" id="totalAlerts">0</div>
+      <div class="stat-small">Records under alerts branch</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Latest Sensor</div>
+      <div class="stat-value" id="latestSensor">—</div>
+      <div class="stat-small">Newest received alert</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Last Updated</div>
+      <div class="stat-value" id="lastUpdated">—</div>
+      <div class="stat-small">Local dashboard update time</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Incoming Power Alerts</h2>
+        <p class="panel-subtitle">
+          Newest alerts appear first. The table updates automatically.
+        </p>
+      </div>
+
+      <div class="controls">
+        <input
+          id="searchInput"
+          class="search-input"
+          type="text"
+          placeholder="Search owner or sensor ID..."
+        >
+
+        <button class="button" id="clearSearchButton">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Power Sent Date</th>
+            <th>Kit Owner</th>
+            <th>Sensor ID</th>
+          </tr>
+        </thead>
+
+        <tbody id="alertsTableBody">
+          <tr>
+            <td colspan="4" class="empty">
+              <div class="empty-title">Waiting for alerts</div>
+              <div>No records have been received from the alerts branch yet.</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="endpoint-box">
+    <div class="endpoint-header">
+      <h2>POST Receiver</h2>
+      <p>
+        The static HTML page does not receive POST requests. Firebase Realtime Database receives them.
+      </p>
+    </div>
+
+<pre class="code-block">POST endpoint:
+https://test-c7bf3-default-rtdb.firebaseio.com/alerts.json
+
+Required JSON body:
+{
+  "kitOwner": "Owner Name",
+  "sensorId": "SENSOR-001",
+  "powerSentAt": {
+    ".sv": "timestamp"
+  }
+}</pre>
+  </section>
+
+  <p class="footer-note">
+    Security note: this exposes the Firebase project configuration in the browser, which is normal for Firebase web apps.
+    Real protection depends on your Firebase Realtime Database rules. If public writes are allowed, anyone with the endpoint can submit alerts.
+  </p>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    onValue,
+    query,
+    orderByChild
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAjBbnm8F76BCb9C5fluUyoZ2QnMSXlHOo",
+    authDomain: "test-c7bf3.firebaseapp.com",
+    databaseURL: "https://test-c7bf3-default-rtdb.firebaseio.com",
+    projectId: "test-c7bf3",
+    storageBucket: "test-c7bf3.firebasestorage.app",
+    messagingSenderId: "573697013702",
+    appId: "1:573697013702:web:fe132fc4d796c06bdbe4c7"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const alertsTableBody = document.getElementById("alertsTableBody");
+  const connectionStatus = document.getElementById("connectionStatus");
+  const totalAlerts = document.getElementById("totalAlerts");
+  const latestSensor = document.getElementById("latestSensor");
+  const lastUpdated = document.getElementById("lastUpdated");
+  const searchInput = document.getElementById("searchInput");
+  const clearSearchButton = document.getElementById("clearSearchButton");
+
+  const alertsQuery = query(
+    ref(db, "alerts"),
+    orderByChild("powerSentAt")
+  );
+
+  let allAlerts = [];
+  let previousKeys = new Set();
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function formatTimestamp(value) {
+    if (!value) {
+      return "Not available";
+    }
+
+    const timestamp = Number(value);
+
+    if (Number.isNaN(timestamp)) {
+      return escapeHtml(value);
+    }
+
+    return new Date(timestamp).toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+  }
+
+  function formatDashboardTime() {
+    return new Date().toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+  }
+
+  function normalizeAlert(key, value) {
+    return {
+      key,
+      kitOwner: value?.kitOwner ?? "",
+      sensorId: value?.sensorId ?? "",
+      powerSentAt: value?.powerSentAt ?? 0
+    };
+  }
+
+  function getFilteredAlerts() {
+    const term = searchInput.value.trim().toLowerCase();
+
+    if (!term) {
+      return allAlerts;
+    }
+
+    return allAlerts.filter(alert => {
+      return (
+        String(alert.kitOwner).toLowerCase().includes(term) ||
+        String(alert.sensorId).toLowerCase().includes(term)
+      );
+    });
+  }
+
+  function renderEmpty(messageTitle, messageBody) {
+    alertsTableBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="empty">
+          <div class="empty-title">${escapeHtml(messageTitle)}</div>
+          <div>${escapeHtml(messageBody)}</div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function renderTable() {
+    const filteredAlerts = getFilteredAlerts();
+
+    if (allAlerts.length === 0) {
+      renderEmpty(
+        "No alerts found",
+        "The alerts branch is empty."
+      );
+      return;
+    }
+
+    if (filteredAlerts.length === 0) {
+      renderEmpty(
+        "No matching alerts",
+        "No kit owner or sensor ID matches your search."
+      );
+      return;
+    }
+
+    alertsTableBody.innerHTML = filteredAlerts.map(alert => {
+      const isNew = previousKeys.size > 0 && !previousKeys.has(alert.key);
+
+      return `
+        <tr class="${isNew ? "new-alert" : ""}">
+          <td>
+            <span class="badge">
+              <span class="badge-dot"></span>
+              Received
+            </span>
+          </td>
+          <td class="timestamp">${formatTimestamp(alert.powerSentAt)}</td>
+          <td class="owner">${escapeHtml(alert.kitOwner || "Unknown Owner")}</td>
+          <td>
+            <span class="sensor">${escapeHtml(alert.sensorId || "Unknown Sensor")}</span>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function updateStats() {
+    totalAlerts.textContent = allAlerts.length;
+
+    if (allAlerts.length > 0) {
+      latestSensor.textContent = allAlerts[0].sensorId || "—";
+    } else {
+      latestSensor.textContent = "—";
+    }
+
+    lastUpdated.textContent = formatDashboardTime();
+  }
+
+  onValue(
+    alertsQuery,
+    snapshot => {
+      connectionStatus.textContent = "Live";
+
+      const data = snapshot.val();
+
+      if (!data) {
+        allAlerts = [];
+        previousKeys = new Set();
+        updateStats();
+        renderTable();
+        return;
+      }
+
+      const incomingAlerts = Object.entries(data)
+        .map(([key, value]) => normalizeAlert(key, value))
+        .sort((a, b) => Number(b.powerSentAt || 0) - Number(a.powerSentAt || 0));
+
+      allAlerts = incomingAlerts;
+
+      updateStats();
+      renderTable();
+
+      previousKeys = new Set(allAlerts.map(alert => alert.key));
+    },
+    error => {
+      connectionStatus.textContent = "Error";
+      renderEmpty("Connection error", error.message);
+    }
+  );
+
+  searchInput.addEventListener("input", renderTable);
+
+  clearSearchButton.addEventListener("click", () => {
+    searchInput.value = "";
+    renderTable();
+  });
+</script>
+
+</body>
+</html>
