@@ -368,6 +368,90 @@
     margin: 18px 4px 0;
   }
 
+
+  .login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-card {
+    width: min(430px, 100%);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 28px;
+  }
+
+  .login-card h1 {
+    color: var(--text-main);
+    font-size: 30px;
+    letter-spacing: -0.8px;
+  }
+
+  .login-card p {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 10px 0 20px;
+  }
+
+  .login-form {
+    display: grid;
+    gap: 13px;
+  }
+
+  .login-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+
+  .login-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 12px 14px;
+    font-size: 14px;
+    outline: none;
+    background: #f9fafb;
+  }
+
+  .login-input:focus {
+    border-color: var(--primary);
+    background: white;
+  }
+
+  .login-error {
+    min-height: 20px;
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .logout-button {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 20;
+    display: none;
+    border: none;
+    background: #111827;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 800;
+    box-shadow: var(--shadow);
+  }
+
+  .logout-button:hover {
+    background: #020617;
+  }
+
   @media (max-width: 900px) {
     .stats-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -394,8 +478,15 @@
 
     .controls,
     .search-input,
-    .button {
+    .button,
+    .logout-button {
       width: 100%;
+    }
+
+    .logout-button {
+      position: static;
+      margin: 12px auto 0;
+      justify-content: center;
     }
   }
 </style>
@@ -403,7 +494,52 @@
 
 <body>
 
-<div class="page">
+<div id="loginPage" class="login-page">
+  <section class="login-card">
+    <h1>Kit Alerts Login</h1>
+    <p>
+      Sign in with the Firebase Authentication account allowed to view this dashboard.
+    </p>
+
+    <form id="loginForm" class="login-form">
+      <div>
+        <label class="login-label" for="emailInput">Email</label>
+        <input
+          id="emailInput"
+          class="login-input"
+          type="email"
+          autocomplete="username"
+          placeholder="Enter email"
+          required
+        >
+      </div>
+
+      <div>
+        <label class="login-label" for="passwordInput">Password</label>
+        <input
+          id="passwordInput"
+          class="login-input"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Enter password"
+          required
+        >
+      </div>
+
+      <div id="loginError" class="login-error"></div>
+
+      <button id="loginButton" class="button" type="submit">
+        Login
+      </button>
+    </form>
+  </section>
+</div>
+
+<button id="logoutButton" class="logout-button" type="button">
+  Logout
+</button>
+
+<div class="page" id="dashboardPage" style="display: none;">
 
   <section class="hero">
     <div class="hero-content">
@@ -530,6 +666,12 @@ Required JSON body:
     query,
     orderByChild
   } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAjBbnm8F76BCb9C5fluUyoZ2QnMSXlHOo",
@@ -543,7 +685,16 @@ Required JSON body:
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
 
+  const loginPage = document.getElementById("loginPage");
+  const dashboardPage = document.getElementById("dashboardPage");
+  const loginForm = document.getElementById("loginForm");
+  const emailInput = document.getElementById("emailInput");
+  const passwordInput = document.getElementById("passwordInput");
+  const loginButton = document.getElementById("loginButton");
+  const loginError = document.getElementById("loginError");
+  const logoutButton = document.getElementById("logoutButton");
   const alertsTableBody = document.getElementById("alertsTableBody");
   const connectionStatus = document.getElementById("connectionStatus");
   const totalAlerts = document.getElementById("totalAlerts");
@@ -559,6 +710,7 @@ Required JSON body:
 
   let allAlerts = [];
   let previousKeys = new Set();
+  let realtimeUnsubscribe = null;
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -685,37 +837,99 @@ Required JSON body:
     lastUpdated.textContent = formatDashboardTime();
   }
 
-  onValue(
-    alertsQuery,
-    snapshot => {
-      connectionStatus.textContent = "Live";
+  function showLogin() {
+    loginPage.style.display = "flex";
+    dashboardPage.style.display = "none";
+    logoutButton.style.display = "none";
+  }
 
-      const data = snapshot.val();
+  function showDashboard() {
+    loginPage.style.display = "none";
+    dashboardPage.style.display = "block";
+    logoutButton.style.display = "inline-flex";
+  }
 
-      if (!data) {
-        allAlerts = [];
-        previousKeys = new Set();
+  function startRealtimeListener() {
+    if (realtimeUnsubscribe) {
+      return;
+    }
+
+    realtimeUnsubscribe = onValue(
+      alertsQuery,
+      snapshot => {
+        connectionStatus.textContent = "Live";
+
+        const data = snapshot.val();
+
+        if (!data) {
+          allAlerts = [];
+          previousKeys = new Set();
+          updateStats();
+          renderTable();
+          return;
+        }
+
+        const incomingAlerts = Object.entries(data)
+          .map(([key, value]) => normalizeAlert(key, value))
+          .sort((a, b) => Number(b.powerSentAt || 0) - Number(a.powerSentAt || 0));
+
+        allAlerts = incomingAlerts;
+
         updateStats();
         renderTable();
-        return;
+
+        previousKeys = new Set(allAlerts.map(alert => alert.key));
+      },
+      error => {
+        connectionStatus.textContent = "Error";
+        renderEmpty("Connection error", error.message);
       }
+    );
+  }
 
-      const incomingAlerts = Object.entries(data)
-        .map(([key, value]) => normalizeAlert(key, value))
-        .sort((a, b) => Number(b.powerSentAt || 0) - Number(a.powerSentAt || 0));
-
-      allAlerts = incomingAlerts;
-
-      updateStats();
-      renderTable();
-
-      previousKeys = new Set(allAlerts.map(alert => alert.key));
-    },
-    error => {
-      connectionStatus.textContent = "Error";
-      renderEmpty("Connection error", error.message);
+  function stopRealtimeListener() {
+    if (realtimeUnsubscribe) {
+      realtimeUnsubscribe();
+      realtimeUnsubscribe = null;
     }
-  );
+  }
+
+  loginForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    loginError.textContent = "";
+    loginButton.disabled = true;
+    loginButton.textContent = "Logging in...";
+
+    try {
+      await signInWithEmailAndPassword(
+        auth,
+        emailInput.value.trim(),
+        passwordInput.value
+      );
+
+      passwordInput.value = "";
+    } catch (error) {
+      loginError.textContent = "Login failed. Check the email and password.";
+    } finally {
+      loginButton.disabled = false;
+      loginButton.textContent = "Login";
+    }
+  });
+
+  logoutButton.addEventListener("click", async () => {
+    await signOut(auth);
+  });
+
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      showDashboard();
+      startRealtimeListener();
+    } else {
+      stopRealtimeListener();
+      showLogin();
+    }
+  });
 
   searchInput.addEventListener("input", renderTable);
 
