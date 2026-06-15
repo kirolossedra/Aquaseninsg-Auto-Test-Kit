@@ -910,7 +910,8 @@ Required JSON body:
 
       passwordInput.value = "";
     } catch (error) {
-      loginError.textContent = "Login failed. Check the email and password.";
+      loginError.textContent = error.code;
+      console.error(error.code, error.message);
     } finally {
       loginButton.disabled = false;
       loginButton.textContent = "Login";
